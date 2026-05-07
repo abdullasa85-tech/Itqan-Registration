@@ -1485,10 +1485,9 @@ function handleSubmit(e) {
 
   // Send to Google Sheets via Apps Script
   fetch(SHEETS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
+  method: 'POST',
+  body: new URLSearchParams(payload)
+})
   .then(function(res) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.text();
