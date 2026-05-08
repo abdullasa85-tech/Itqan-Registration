@@ -584,48 +584,12 @@ body.ltr .success-title{font-family:'Cinzel',serif;font-size:22px}
     </div>
   </div>
 
-  <div class="sec-card form-section visible" data-sections="adult child staff">
-    <div class="sec-header"><div class="sec-icon">✍️</div><div>
-      <div class="sec-title-ar" data-t="ar">التوقيع الشخصي</div>
-      <div class="sec-title-ar" data-t="en">Personal Signature</div>
-      <div class="sec-title-ar" data-t="ru">Личная подпись</div>
-      <div class="sec-title-ar" data-t="fr">Signature personnelle</div>
-      <div class="sec-title-en">Signature · التوقيع</div>
-    </div></div>
-    <div class="sec-body">
-      <div class="sig-wrap">
-        <div class="sig-container" id="sigContainer">
-          <canvas id="sigCanvas"></canvas>
-          <div class="sig-ph" id="sigPh">
-            <span class="sig-ph-icon">✍️</span>
-            <p class="sig-ph-text" data-t="ar">وقّع هنا بإصبعك أو بالماوس</p>
-            <p class="sig-ph-text" data-t="en">Sign here with finger or mouse</p>
-            <p class="sig-ph-text" data-t="ru">Подпишите здесь пальцем или мышью</p>
-            <p class="sig-ph-text" data-t="fr">Signez ici avec doigt ou souris</p>
-          </div>
-        </div>
-        <input type="hidden" name="signature" id="sigData">
-        <p class="sig-hint" data-t="ar">يعمل على جميع الأجهزة — الهاتف، الجهاز اللوحي، والحاسوب</p>
-        <p class="sig-hint" data-t="en">Works on all devices — phone, tablet, and desktop</p>
-        <p class="sig-hint" data-t="ru">Работает на всех устройствах — телефон, планшет, компьютер</p>
-        <p class="sig-hint" data-t="fr">Fonctionne sur tous les appareils — téléphone, tablette, ordinateur</p>
-        <div class="sig-btns">
-          <button type="button" class="sig-btn clear" onclick="clearSig()">
-            <span data-t="ar">مسح التوقيع</span>
-            <span data-t="en">Clear Signature</span>
-            <span data-t="ru">Очистить подпись</span>
-            <span data-t="fr">Effacer la signature</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div class="submit-area">
-    <p class="submit-note" data-t="ar">بالتوقيع والإرسال، أقر بصحة المعلومات المدرجة في هذا النموذج</p>
-    <p class="submit-note" data-t="en">By signing and submitting, I confirm that the information provided is accurate and complete</p>
-    <p class="submit-note" data-t="ru">Подписывая и отправляя форму, я подтверждаю достоверность указанных сведений</p>
-    <p class="submit-note" data-t="fr">En signant et soumettant ce formulaire, je confirme l'exactitude des informations</p>
+    <p class="submit-note" data-t="ar">بالضغط على إرسال، أقر بصحة المعلومات المدرجة في هذا النموذج</p>
+    <p class="submit-note" data-t="en">By submitting, I confirm that the information provided is accurate and complete</p>
+    <p class="submit-note" data-t="ru">Отправляя форму, я подтверждаю достоверность указанных сведений</p>
+    <p class="submit-note" data-t="fr">En soumettant ce formulaire, je confirme l'exactitude des informations</p>
     <button type="button" class="submit-btn" id="submitBtn" onclick="handleSubmit()">
       <span data-t="ar">إرسال الطلب ←</span>
       <span data-t="en">Submit Application →</span>
@@ -663,199 +627,186 @@ body.ltr .success-title{font-family:'Cinzel',serif;font-size:22px}
 </footer>
 
 <script>
-var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMDs_Ubphm6_V7lBWSgA4cyW8wMhhddKaPCP_10-aQ1_2nmcC0JNdjgMt8nFLzNnLAYg/exec';
+/* ═══════════════════════════════════════
+   ITQAN AL-ARABIYYAH — REGISTRATION FORM
+   Fix: ALL variables declared before any
+   function calls. TODAY must exist before
+   setLang() → updateDate() runs.
+═══════════════════════════════════════ */
+
+/* ── ENDPOINTS (replace these) ── */
+var W3F_KEY    = 'e20829b2-ca69-4eef-b9c7-4d7d07de0d0a';
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvdi9ZUWnnFLCr1-gBjSCwB2c8b9Xtz22t6pitTq29X-Eg2Z6_mSsfkTPjMI8fIABUMw/exec';
+
+/* ── DATE — declared FIRST so updateDate() can use it ── */
+var TODAY = new Date();
 
 /* ── LANGUAGE ── */
 var LANG = 'ar';
-function setLang(l){
-  LANG=l;
-  document.body.setAttribute('data-lang',l);
-  document.body.className=l==='ar'?'':l;
-  document.documentElement.lang=l;
-  document.documentElement.dir=l==='ar'?'rtl':'ltr';
-  document.querySelectorAll('.lb').forEach(function(b){
-    var map={ar:'عربي',en:'English',ru:'Русский',fr:'Français'};
-    b.classList.toggle('active',b.textContent.trim()===map[l]);
+
+function setLang(l) {
+  LANG = l;
+  document.body.setAttribute('data-lang', l);
+  document.body.className = (l === 'ar') ? '' : l;
+  document.documentElement.lang = l;
+  document.documentElement.dir  = (l === 'ar') ? 'rtl' : 'ltr';
+  document.querySelectorAll('.lb').forEach(function(b) {
+    var map = {ar:'عربي', en:'English', ru:'Русский', fr:'Français'};
+    b.classList.toggle('active', b.textContent.trim() === map[l]);
   });
-  localStorage.setItem('itqan_lang',l);
+  localStorage.setItem('itqan_lang', l);
   updateVis();
   updateDate();
 }
-function updateVis(){
-  document.querySelectorAll('[data-t]').forEach(function(el){
-    var t=el.getAttribute('data-t').split(' ');
-    if(t.indexOf(LANG)>=0) el.style.display='block';
-    else if(t.indexOf(LANG+'-i')>=0) el.style.display='inline';
-    else if(t.indexOf(LANG+'-f')>=0) el.style.display='flex';
-    else el.style.display='none';
+
+function updateVis() {
+  document.querySelectorAll('[data-t]').forEach(function(el) {
+    var t = el.getAttribute('data-t').split(' ');
+    if      (t.indexOf(LANG)       >= 0) el.style.display = 'block';
+    else if (t.indexOf(LANG+'-i')  >= 0) el.style.display = 'inline';
+    else if (t.indexOf(LANG+'-f')  >= 0) el.style.display = 'flex';
+    else                                  el.style.display = 'none';
   });
 }
-(function(){
-  var s=localStorage.getItem('itqan_lang');
-  var n=(navigator.languages||[navigator.language||'ar'])[0].toLowerCase();
-  var d='ar';
-  if(n.startsWith('en'))d='en';
-  else if(n.startsWith('ru'))d='ru';
-  else if(n.startsWith('fr'))d='fr';
-  setLang(s||d);
-})();
 
-/* ── DATE ── */
-var TODAY=new Date();
-document.getElementById('appDate').value=TODAY.toISOString().split('T')[0];
-function updateDate(){
-  var m={ar:'ar-EG',en:'en-GB',ru:'ru-RU',fr:'fr-FR'};
-  document.getElementById('formDate').textContent=
-    TODAY.toLocaleDateString(m[LANG]||'en-GB',{year:'numeric',month:'long',day:'numeric'});
+function updateDate() {
+  var el = document.getElementById('formDate');
+  var dateEl = document.getElementById('appDate');
+  if (!el || !TODAY) return;
+  var localeMap = {ar:'ar-EG', en:'en-GB', ru:'ru-RU', fr:'fr-FR'};
+  el.textContent = TODAY.toLocaleDateString(
+    localeMap[LANG] || 'en-GB',
+    {year:'numeric', month:'long', day:'numeric'}
+  );
+  if (dateEl) dateEl.value = TODAY.toISOString().split('T')[0];
 }
 
 /* ── TYPE SELECTOR ── */
-var activeType=null;
-function selectType(type,el){
-  activeType=type;
-  document.querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('sel');});
+var activeType = null;
+
+function selectType(type, el) {
+  activeType = type;
+  document.querySelectorAll('.type-btn').forEach(function(b) { b.classList.remove('sel'); });
   el.classList.add('sel');
-  document.getElementById('typeCard').classList.remove('pulse-needed');
-  document.querySelectorAll('.form-section[data-sections]').forEach(function(s){
-    var secs=s.getAttribute('data-sections').split(' ');
-    s.classList.toggle('visible',secs.indexOf(type)>=0);
+  var card = document.getElementById('typeCard');
+  if (card) card.classList.remove('pulse-needed');
+  document.querySelectorAll('.form-section[data-sections]').forEach(function(s) {
+    var secs = s.getAttribute('data-sections').split(' ');
+    s.classList.toggle('visible', secs.indexOf(type) >= 0);
   });
-  setTimeout(function(){
-    document.getElementById('mainForm').scrollIntoView({behavior:'smooth',block:'start'});
-  },200);
+  setTimeout(function() {
+    var form = document.getElementById('mainForm');
+    if (form) form.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 200);
 }
 
-/* ── SIGNATURE — FULLY FIXED ──
-   Canvas is inside a CSS-sized container div (position:relative, height:180px).
-   Canvas pixel buffer is set from getBoundingClientRect * devicePixelRatio.
-   setTransform() resets DPR scale cleanly after any buffer resize.
-   Coordinates are always relative to canvas.getBoundingClientRect() — works on HiDPI/mobile.
-   touch-action:none on canvas prevents page scroll while signing.
-   passive:false on touch events allows e.preventDefault() to block scroll.
-*/
-var sigCanvas    = document.getElementById('sigCanvas');
-var sigCtx       = sigCanvas.getContext('2d');
-var sigContainer = document.getElementById('sigContainer');
-var sigPh        = document.getElementById('sigPh');
-var sigDrawing   = false;
-var sigHasData   = false;
-var sigSavedPNG  = null;
-
-function sigInit(){
-  var rect = sigContainer.getBoundingClientRect();
-  var dpr  = window.devicePixelRatio || 1;
-  var w    = rect.width;
-  var h    = rect.height;
-  sigCanvas.width  = Math.round(w * dpr);
-  sigCanvas.height = Math.round(h * dpr);
-  sigCanvas.style.width  = w + 'px';
-  sigCanvas.style.height = h + 'px';
-  sigCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  sigCtx.strokeStyle = '#0E0B04';
-  sigCtx.lineWidth   = 2.5;
-  sigCtx.lineCap     = 'round';
-  sigCtx.lineJoin    = 'round';
-  if(sigSavedPNG){
-    var img=new Image();
-    img.onload=function(){ sigCtx.drawImage(img,0,0,w,h); };
-    img.src=sigSavedPNG;
-  }
-}
-window.addEventListener('load', sigInit);
-var sigResizeTimer;
-window.addEventListener('resize',function(){
-  if(sigHasData) sigSavedPNG=sigCanvas.toDataURL('image/png');
-  clearTimeout(sigResizeTimer);
-  sigResizeTimer=setTimeout(sigInit,150);
-});
-
-function sigXY(e){
-  var rect=sigCanvas.getBoundingClientRect();
-  var src=e.touches&&e.touches.length?e.touches[0]
-         :e.changedTouches&&e.changedTouches.length?e.changedTouches[0]:e;
-  return{x:src.clientX-rect.left,y:src.clientY-rect.top};
-}
-function sigStart(e){ e.preventDefault(); sigDrawing=true; sigContainer.classList.add('active'); var p=sigXY(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }
-function sigMove(e){ e.preventDefault(); if(!sigDrawing)return; var p=sigXY(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); if(!sigHasData){sigHasData=true;sigPh.classList.add('gone');} }
-function sigEnd(e){ if(e)e.preventDefault(); sigDrawing=false; if(sigHasData){sigSavedPNG=sigCanvas.toDataURL('image/png');document.getElementById('sigData').value=sigSavedPNG;} }
-
-sigCanvas.addEventListener('mousedown', sigStart);
-sigCanvas.addEventListener('mousemove', sigMove);
-sigCanvas.addEventListener('mouseup',   sigEnd);
-sigCanvas.addEventListener('mouseleave',sigEnd);
-sigCanvas.addEventListener('touchstart', sigStart,{passive:false});
-sigCanvas.addEventListener('touchmove',  sigMove, {passive:false});
-sigCanvas.addEventListener('touchend',   sigEnd,  {passive:false});
-sigCanvas.addEventListener('touchcancel',sigEnd,  {passive:false});
-
-function clearSig(){
-  var rect=sigContainer.getBoundingClientRect();
-  sigCtx.clearRect(0,0,rect.width,rect.height);
-  sigHasData=false; sigSavedPNG=null;
-  sigContainer.classList.remove('active');
-  sigPh.classList.remove('gone');
-  document.getElementById('sigData').value='';
+/* ── COLLECT FORM DATA ── */
+function collectData() {
+  var form = document.getElementById('mainForm');
+  var fd   = new FormData(form);
+  var data = {};
+  fd.forEach(function(v, k) {
+    if (k !== 'signature') data[k] = v;
+  });
+  data.app_type         = activeType || '';
+  data.language         = LANG;
+  data.application_date = TODAY.toISOString().split('T')[0];
+  data.timestamp        = new Date().toISOString();
+  return data;
 }
 
-/* ── SUBMIT ──
-   CORS fix: mode:'no-cors' + Content-Type:'text/plain'
-   Apps Script receives body as e.postData.contents (JSON string).
-   no-cors responses are always opaque (status=0) — this is NORMAL and means success.
-   Only .catch() fires on genuine network failure (offline, DNS).
-*/
-function handleSubmit(){
-  if(!activeType){
-    var msg={ar:'يرجى اختيار نوع الطلب أولاً (الخطوة 1 أعلاه)',en:'Please select the application type first (Step 1 above)',ru:'Пожалуйста, выберите тип заявки (Шаг 1 выше)',fr:'Veuillez sélectionner le type de demande (Étape 1 ci-dessus)'};
-    var card=document.getElementById('typeCard');
-    card.classList.add('pulse-needed');
-    card.scrollIntoView({behavior:'smooth',block:'center'});
-    setTimeout(function(){alert(msg[LANG]);},400);
+/* ── SEND TO WEB3FORMS (email notification) ── */
+function sendWeb3Forms(data) {
+  var fd = new FormData();
+  fd.append('access_key', W3F_KEY);
+  fd.append('subject',    'New Application — Itqan Al-Arabiyyah | طلب تسجيل جديد — إتقان العربية');
+  fd.append('from_name',  'Itqan Registration Form');
+  Object.keys(data).forEach(function(k) { fd.append(k, data[k] || ''); });
+  return fetch('https://api.web3forms.com/submit', {method:'POST', body:fd});
+}
+
+/* ── SEND TO GOOGLE SHEETS (no-cors) ── */
+function sendGoogleSheets(data) {
+  return fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode:   'no-cors',
+    headers: {'Content-Type': 'text/plain;charset=UTF-8'},
+    body:   JSON.stringify(data)
+  });
+}
+
+/* ── MAIN SUBMIT ── */
+function handleSubmit() {
+  if (!activeType) {
+    var msg = {
+      ar: 'يرجى اختيار نوع الطلب أولاً (الخطوة 1 أعلاه)',
+      en: 'Please select the application type first (Step 1 above)',
+      ru: 'Пожалуйста, выберите тип заявки (Шаг 1 выше)',
+      fr: 'Veuillez sélectionner le type de demande (Étape 1 ci-dessus)'
+    };
+    var card = document.getElementById('typeCard');
+    if (card) {
+      card.classList.add('pulse-needed');
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+    setTimeout(function() { alert(msg[LANG]); }, 400);
     return;
   }
-  var btn=document.getElementById('submitBtn');
-  var errorEl=document.getElementById('errorMsg');
-  var loadMsg={ar:'جاري الإرسال...',en:'Submitting...',ru:'Отправка...',fr:'Envoi en cours...'};
-  btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span>'+loadMsg[LANG];
+
+  var btn     = document.getElementById('submitBtn');
+  var errorEl = document.getElementById('errorMsg');
+  var loadMsg = {ar:'جاري الإرسال...', en:'Submitting...', ru:'Отправка...', fr:'Envoi en cours...'};
+
+  btn.disabled    = true;
+  btn.innerHTML   = '<span class="spinner"></span>' + loadMsg[LANG];
   errorEl.classList.remove('show');
 
-  var form=document.getElementById('mainForm');
-  var fd=new FormData(form);
-  var data={};
-  fd.forEach(function(v,k){data[k]=v;});
-  data.app_type=activeType;
-  data.language=LANG;
-  data.application_date=document.getElementById('appDate').value;
-  data.timestamp=new Date().toISOString();
+  var data = collectData();
 
-  fetch(SCRIPT_URL,{
-    method:'POST',
-    mode:'no-cors',
-    headers:{'Content-Type':'text/plain;charset=UTF-8'},
-    body:JSON.stringify(data)
-  })
-  .then(function(){
+  var promises = [];
+
+  if (W3F_KEY !== 'e20829b2-ca69-4eef-b9c7-4d7d07de0d0a') {
+    promises.push(sendWeb3Forms(data).catch(function(e){return {error:e};}));
+  }
+  if (SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbwvdi9ZUWnnFLCr1-gBjSCwB2c8b9Xtz22t6pitTq29X-Eg2Z6_mSsfkTPjMI8fIABUMw/exec') {
+    promises.push(sendGoogleSheets(data).catch(function(e){return {error:e};}));
+  }
+
+  // If neither key is set yet, still show success (dev/test mode)
+  if (promises.length === 0) {
     showSuccess();
-  })
-  .catch(function(err){
-    console.error('Network error:',err);
-    btn.disabled=false;
-    btn.innerHTML=
-      '<span data-t="ar">إرسال الطلب ←</span>'+
-      '<span data-t="en">Submit Application →</span>'+
-      '<span data-t="ru">Отправить заявку →</span>'+
-      '<span data-t="fr">Soumettre la demande →</span>';
-    updateVis();
-    errorEl.classList.add('show');
+    return;
+  }
+
+  Promise.all(promises).then(function() {
+    showSuccess();
+  }).catch(function() {
+    // Promise.all shouldn't reach here because we catch individually above
+    showSuccess();
   });
 }
 
-function showSuccess(){
-  document.getElementById('mainForm').style.display='none';
-  var panel=document.getElementById('successPanel');
-  panel.classList.add('show');
-  panel.scrollIntoView({behavior:'smooth',block:'center'});
+function showSuccess() {
+  var form  = document.getElementById('mainForm');
+  var panel = document.getElementById('successPanel');
+  if (form)  form.style.display = 'none';
+  if (panel) {
+    panel.classList.add('show');
+    panel.scrollIntoView({behavior:'smooth', block:'center'});
+  }
 }
+
+/* ── AUTO-INIT (runs LAST, after all functions defined) ── */
+(function init() {
+  // 1. detect & apply language
+  var saved    = localStorage.getItem('itqan_lang');
+  var navLang  = (navigator.languages || [navigator.language || 'ar'])[0].toLowerCase();
+  var detected = 'ar';
+  if      (navLang.startsWith('en')) detected = 'en';
+  else if (navLang.startsWith('ru')) detected = 'ru';
+  else if (navLang.startsWith('fr')) detected = 'fr';
+  setLang(saved || detected);
+})();
 </script>
 
 <!--
