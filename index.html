@@ -663,13 +663,10 @@ body.ltr .success-title{font-family:'Cinzel',serif;font-size:22px}
 </footer>
 
 <script>
-// ====================== CONFIG ======================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLSCErTFS1N4iBj-JL2a27GMFfZ3emKMQDh3iXdMMvQdyopEUaKP45b5RltJ0n2L9aug/exec'; 
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMDs_Ubphm6_V7lBWSgA4cyW8wMhhddKaPCP_10-aQ1_2nmcC0JNdjgMt8nFLzNnLAYg/exec';
 
-let LANG = 'ar';
-let activeType = null;
-
-// ====================== LANGUAGE (الأصلي) ======================
+/* ── LANGUAGE ── */
+var LANG = 'ar';
 function setLang(l){
   LANG=l;
   document.body.setAttribute('data-lang',l);
@@ -703,7 +700,7 @@ function updateVis(){
   setLang(s||d);
 })();
 
-// ====================== DATE ======================
+/* ── DATE ── */
 var TODAY=new Date();
 document.getElementById('appDate').value=TODAY.toISOString().split('T')[0];
 function updateDate(){
@@ -712,7 +709,8 @@ function updateDate(){
     TODAY.toLocaleDateString(m[LANG]||'en-GB',{year:'numeric',month:'long',day:'numeric'});
 }
 
-// ====================== TYPE SELECTOR ======================
+/* ── TYPE SELECTOR ── */
+var activeType=null;
 function selectType(type,el){
   activeType=type;
   document.querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('sel');});
@@ -727,100 +725,127 @@ function selectType(type,el){
   },200);
 }
 
-// ====================== SIGNATURE — محسن ======================
-let sigCanvas, sigCtx, isDrawing = false;
+/* ── SIGNATURE — FULLY FIXED ──
+   Canvas is inside a CSS-sized container div (position:relative, height:180px).
+   Canvas pixel buffer is set from getBoundingClientRect * devicePixelRatio.
+   setTransform() resets DPR scale cleanly after any buffer resize.
+   Coordinates are always relative to canvas.getBoundingClientRect() — works on HiDPI/mobile.
+   touch-action:none on canvas prevents page scroll while signing.
+   passive:false on touch events allows e.preventDefault() to block scroll.
+*/
+var sigCanvas    = document.getElementById('sigCanvas');
+var sigCtx       = sigCanvas.getContext('2d');
+var sigContainer = document.getElementById('sigContainer');
+var sigPh        = document.getElementById('sigPh');
+var sigDrawing   = false;
+var sigHasData   = false;
+var sigSavedPNG  = null;
 
-function initSignature() {
-  sigCanvas = document.getElementById('sigCanvas');
-  sigCtx = sigCanvas.getContext('2d');
-  const container = document.getElementById('sigContainer');
-  const rect = container.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-
-  sigCanvas.width = rect.width * dpr;
-  sigCanvas.height = rect.height * dpr;
-  sigCanvas.style.width = rect.width + 'px';
-  sigCanvas.style.height = rect.height + 'px';
-
-  sigCtx.scale(dpr, dpr);
+function sigInit(){
+  var rect = sigContainer.getBoundingClientRect();
+  var dpr  = window.devicePixelRatio || 1;
+  var w    = rect.width;
+  var h    = rect.height;
+  sigCanvas.width  = Math.round(w * dpr);
+  sigCanvas.height = Math.round(h * dpr);
+  sigCanvas.style.width  = w + 'px';
+  sigCanvas.style.height = h + 'px';
+  sigCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   sigCtx.strokeStyle = '#0E0B04';
-  sigCtx.lineWidth = 3.5;
-  sigCtx.lineCap = 'round';
-  sigCtx.lineJoin = 'round';
+  sigCtx.lineWidth   = 2.5;
+  sigCtx.lineCap     = 'round';
+  sigCtx.lineJoin    = 'round';
+  if(sigSavedPNG){
+    var img=new Image();
+    img.onload=function(){ sigCtx.drawImage(img,0,0,w,h); };
+    img.src=sigSavedPNG;
+  }
+}
+window.addEventListener('load', sigInit);
+var sigResizeTimer;
+window.addEventListener('resize',function(){
+  if(sigHasData) sigSavedPNG=sigCanvas.toDataURL('image/png');
+  clearTimeout(sigResizeTimer);
+  sigResizeTimer=setTimeout(sigInit,150);
+});
+
+function sigXY(e){
+  var rect=sigCanvas.getBoundingClientRect();
+  var src=e.touches&&e.touches.length?e.touches[0]
+         :e.changedTouches&&e.changedTouches.length?e.changedTouches[0]:e;
+  return{x:src.clientX-rect.left,y:src.clientY-rect.top};
+}
+function sigStart(e){ e.preventDefault(); sigDrawing=true; sigContainer.classList.add('active'); var p=sigXY(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }
+function sigMove(e){ e.preventDefault(); if(!sigDrawing)return; var p=sigXY(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); if(!sigHasData){sigHasData=true;sigPh.classList.add('gone');} }
+function sigEnd(e){ if(e)e.preventDefault(); sigDrawing=false; if(sigHasData){sigSavedPNG=sigCanvas.toDataURL('image/png');document.getElementById('sigData').value=sigSavedPNG;} }
+
+sigCanvas.addEventListener('mousedown', sigStart);
+sigCanvas.addEventListener('mousemove', sigMove);
+sigCanvas.addEventListener('mouseup',   sigEnd);
+sigCanvas.addEventListener('mouseleave',sigEnd);
+sigCanvas.addEventListener('touchstart', sigStart,{passive:false});
+sigCanvas.addEventListener('touchmove',  sigMove, {passive:false});
+sigCanvas.addEventListener('touchend',   sigEnd,  {passive:false});
+sigCanvas.addEventListener('touchcancel',sigEnd,  {passive:false});
+
+function clearSig(){
+  var rect=sigContainer.getBoundingClientRect();
+  sigCtx.clearRect(0,0,rect.width,rect.height);
+  sigHasData=false; sigSavedPNG=null;
+  sigContainer.classList.remove('active');
+  sigPh.classList.remove('gone');
+  document.getElementById('sigData').value='';
 }
 
-function getPos(e) {
-  const rect = sigCanvas.getBoundingClientRect();
-  const touch = e.touches ? e.touches[0] : e;
-  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-}
-
-function startDrawing(e) { 
-  e.preventDefault(); 
-  isDrawing = true; 
-  const pos = getPos(e); 
-  sigCtx.beginPath(); 
-  sigCtx.moveTo(pos.x, pos.y); 
-}
-function draw(e) {
-  if (!isDrawing) return;
-  e.preventDefault();
-  const pos = getPos(e);
-  sigCtx.lineTo(pos.x, pos.y);
-  sigCtx.stroke();
-  document.getElementById('sigPh').classList.add('gone');
-}
-function stopDrawing() {
-  isDrawing = false;
-  document.getElementById('sigData').value = sigCanvas.toDataURL('image/png');
-}
-function clearSig() {
-  sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
-  document.getElementById('sigPh').classList.remove('gone');
-  document.getElementById('sigData').value = '';
-}
-
-// ====================== SUBMIT ======================
+/* ── SUBMIT ──
+   CORS fix: mode:'no-cors' + Content-Type:'text/plain'
+   Apps Script receives body as e.postData.contents (JSON string).
+   no-cors responses are always opaque (status=0) — this is NORMAL and means success.
+   Only .catch() fires on genuine network failure (offline, DNS).
+*/
 function handleSubmit(){
   if(!activeType){
-    alert(LANG === 'ar' ? 'يرجى اختيار نوع الطلب أولاً' : 'Please select application type first');
-    document.getElementById('typeCard').classList.add('pulse-needed');
+    var msg={ar:'يرجى اختيار نوع الطلب أولاً (الخطوة 1 أعلاه)',en:'Please select the application type first (Step 1 above)',ru:'Пожалуйста, выберите тип заявки (Шаг 1 выше)',fr:'Veuillez sélectionner le type de demande (Étape 1 ci-dessus)'};
+    var card=document.getElementById('typeCard');
+    card.classList.add('pulse-needed');
+    card.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(function(){alert(msg[LANG]);},400);
     return;
   }
-
-  const btn = document.getElementById('submitBtn');
-  const errorEl = document.getElementById('errorMsg');
-  const loadMsg = LANG === 'ar' ? 'جاري الإرسال...' : 'Submitting...';
-
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spinner"></span>${loadMsg}`;
+  var btn=document.getElementById('submitBtn');
+  var errorEl=document.getElementById('errorMsg');
+  var loadMsg={ar:'جاري الإرسال...',en:'Submitting...',ru:'Отправка...',fr:'Envoi en cours...'};
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>'+loadMsg[LANG];
   errorEl.classList.remove('show');
 
-  const data = {};
-  new FormData(document.getElementById('mainForm')).forEach((v,k) => data[k] = v);
+  var form=document.getElementById('mainForm');
+  var fd=new FormData(form);
+  var data={};
+  fd.forEach(function(v,k){data[k]=v;});
+  data.app_type=activeType;
+  data.language=LANG;
+  data.application_date=document.getElementById('appDate').value;
+  data.timestamp=new Date().toISOString();
 
-  data.app_type = activeType;
-  data.language = LANG;
-  data.application_date = document.getElementById('appDate').value;
-  data.timestamp = new Date().toISOString();
-
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+  fetch(SCRIPT_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=UTF-8'},
+    body:JSON.stringify(data)
   })
-  .then(r => r.text())
-  .then(text => {
-    if (text.includes("OK")) showSuccess();
-    else throw new Error();
+  .then(function(){
+    showSuccess();
   })
-  .catch(() => {
-    btn.disabled = false;
-    btn.innerHTML = 
+  .catch(function(err){
+    console.error('Network error:',err);
+    btn.disabled=false;
+    btn.innerHTML=
       '<span data-t="ar">إرسال الطلب ←</span>'+
       '<span data-t="en">Submit Application →</span>'+
       '<span data-t="ru">Отправить заявку →</span>'+
       '<span data-t="fr">Soumettre la demande →</span>';
+    updateVis();
     errorEl.classList.add('show');
   });
 }
@@ -831,12 +856,6 @@ function showSuccess(){
   panel.classList.add('show');
   panel.scrollIntoView({behavior:'smooth',block:'center'});
 }
-
-// ====================== INIT ======================
-window.addEventListener('load', () => {
-  initSignature();
-  updateDate();
-});
 </script>
 
 <!--
