@@ -768,7 +768,7 @@ function handleSubmit() {
   if (W3F_KEY !== 'e20829b2-ca69-4eef-b9c7-4d7d07de0d0a') {
     promises.push(sendWeb3Forms(data).catch(function(e){return {error:e};}));
   }
-  if (SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbwvdi9ZUWnnFLCr1-gBjSCwB2c8b9Xtz22t6pitTq29X-Eg2Z6_mSsfkTPjMI8fIABUMw/exec') {
+  if (SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL') {
     promises.push(sendGoogleSheets(data).catch(function(e){return {error:e};}));
   }
 
@@ -778,10 +778,16 @@ function handleSubmit() {
     return;
   }
 
-  Promise.all(promises).then(function() {
-    showSuccess();
-  }).catch(function() {
-    // Promise.all shouldn't reach here because we catch individually above
+  // Use allSettled so one failure doesn't block the other
+  var settled = Promise.allSettled
+    ? Promise.allSettled(promises)
+    : Promise.all(promises.map(function(p){ return p.then(function(v){return {status:'fulfilled',value:v};},function(e){return {status:'rejected',reason:e};}); }));
+
+  settled.then(function(results) {
+    // Log results for debugging
+    results.forEach(function(r, i) {
+      console.log('Request', i+1, ':', r.status, r.reason || '');
+    });
     showSuccess();
   });
 }
